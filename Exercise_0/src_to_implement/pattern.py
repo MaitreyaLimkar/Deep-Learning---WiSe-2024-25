@@ -4,6 +4,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from keras.src.legacy.backend import dtype
+
 
 class Checker:
   def __init__(self, resol, ts):
@@ -45,8 +47,48 @@ class Circle:
         self.resol = resol
         self.rad = rad
         self.pos = pos
-        self.output = None
+        self.output = np.zeros((self.resol,self.resol),dtype=int)
 
     def draw(self):
+        # We create a 2D coordinate array for pixel positions
+        y, x = np.meshgrid(np.arange(self.resol, dtype=int), np.arange(self.resol, dtype=int))
+
+        # We now shift the coordinates at the position given by the pos tuple by subtracting.
+        dist_x = x - self.pos[0]
+        dist_y = y - self.pos[1]
+
+        # We compute the distance between each pixel and the centre of the circle using the equation of circle.
+        dist_r = np.sqrt(dist_x**2 + dist_y**2)
+
+        dist_bool = dist_r < self.rad # Boolean values stored
+
+        self.output[y[dist_bool],x[dist_bool]] = 1
+        print(self.output)
+        return self.output.copy()
 
     def show(self):
+        plt.imshow(self.output, cmap='gray')
+        plt.tick_params(left=False, right=False, labelleft=False,
+                        labelbottom=False, bottom=False)
+        plt.show()
+
+class Spectrum:
+    def __init__(self, resol):
+        """ resol (int) = Number of pixels in each dimension """
+        self.resol = resol
+        self.output = np.zeros((resol,resol,3),dtype=float) # 3D Array
+
+    def draw(self):
+        forwpatt = np.linspace(0.0, 1.0, self.resol, dtype=float)
+        backpatt = np.linspace(1.0, 0.0, self.resol, dtype=float)
+        self.output[:, :, 0] = np.tile(forwpatt, (self.resol, 1))
+        self.output[:, :, 1] = np.tile(forwpatt, (self.resol, 1)).T
+        self.output[:, :, 2] = np.tile(backpatt, (self.resol, 1))
+
+        return self.output.copy()
+
+    def show(self):
+        plt.imshow(self.output, cmap='gray')
+        plt.tick_params(left=False, right=False, labelleft=False,
+                        labelbottom=False, bottom=False)
+        plt.show()
