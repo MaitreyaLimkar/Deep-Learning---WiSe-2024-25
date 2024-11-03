@@ -63,7 +63,7 @@ class Circle:
         dist_bool = dist_r < self.rad # Boolean values stored
 
         self.output[y[dist_bool],x[dist_bool]] = 1
-        print(self.output)
+
         return self.output.copy()
 
     def show(self):
@@ -79,12 +79,25 @@ class Spectrum:
         self.output = np.zeros((resol,resol,3),dtype=float) # 3D Array
 
     def draw(self):
-        forwpatt = np.linspace(0.0, 1.0, self.resol, dtype=float)
-        backpatt = np.linspace(1.0, 0.0, self.resol, dtype=float)
-        self.output[:, :, 0] = np.tile(forwpatt, (self.resol, 1))
-        self.output[:, :, 1] = np.tile(forwpatt, (self.resol, 1)).T
-        self.output[:, :, 2] = np.tile(backpatt, (self.resol, 1))
 
+        # Pattern arrays from 0 to 1 and 1 to 0 respectively
+        forward_pat = np.linspace(0.0, 1.0, self.resol, dtype=float)
+        backward_pat = np.linspace(1.0, 0.0, self.resol, dtype=float)
+
+        # Initialize RGB array with proper shape
+        rgb = np.zeros((self.resol, self.resol, 3),dtype=float)
+
+        # Red channel: varies left to right
+        rgb[:, :, 0] = np.tile(forward_pat, (self.resol, 1))
+
+        # Green channel: varies top to bottom. Hence the transpose
+        rgb[:, :, 1] = np.tile(forward_pat, (self.resol, 1)).T
+
+        # Blue channel: varies left to right (decreasing)
+        rgb[:, :, 2] = np.tile(backward_pat, (self.resol, 1))
+
+        # rgb array copy is returned to the output array
+        self.output = rgb.copy()
         return self.output.copy()
 
     def show(self):
