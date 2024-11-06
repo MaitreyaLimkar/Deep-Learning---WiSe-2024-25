@@ -1,8 +1,7 @@
-"""This is the Main script that imports and calls the classes created and are implemented below.
-    As per instructions, no loops are used."""
+"""This is the Main script that imports and calls the classes created and are implemented below."""
 
 import pattern as pat
-from Exercise_0.src_to_implement.pattern import Spectrum
+import generator as gen
 
 checkerboard = pat.Checker(100, 10)
 checkerboard.draw()
@@ -15,3 +14,7 @@ circle.show()
 spectrum = pat.Spectrum(200)
 spectrum.draw()
 spectrum.show()
+
+generate = gen.ImageGenerator('./data/exercise_data/', './data/Labels.json', 8, [12, 12, 3], rotation=False, mirroring=False,
+                             shuffle=True)
+generate.show()

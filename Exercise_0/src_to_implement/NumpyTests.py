@@ -161,8 +161,8 @@ class TestSpectrum(unittest.TestCase):
 class TestGen(unittest.TestCase):
     def setUp(self):
         # Set the label and the file path
-        self.label_path = './Labels.json'
-        self.file_path = './exercise_data/'
+        self.label_path = 'D:/Maitreya_Docs/Education/MS_in_Deutschland/FAU-Erlangen/Comp_Eng/Studies/3_WiSe_2024-25/DeepLearning/WiSe_2024-25/Exercises/Exercise_0/src_to_implement/data/Labels.json'
+        self.file_path = 'D:/Maitreya_Docs/Education/MS_in_Deutschland/FAU-Erlangen/Comp_Eng/Studies/3_WiSe_2024-25/DeepLearning/WiSe_2024-25/Exercises/Exercise_0/src_to_implement/data/exercise_data/'
 
     def _get_corner_points(self, image):
         # Utility function to check whether the augmentations where performed
