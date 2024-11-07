@@ -110,7 +110,6 @@ class ImageGenerator:
         figures_in_y = self.batch_size // figures_in_x
         images, labels = self.next()
 
-        # fig = plt.figure()
         loc, ax = plt.subplots(figures_in_x, figures_in_y)
         for i in range(figures_in_x):
             for j in range(figures_in_y):
