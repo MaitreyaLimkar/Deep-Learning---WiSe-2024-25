@@ -90,13 +90,13 @@ class Spectrum:
         # Red channel: varies left to right
         rgb[:, :, 0] = np.tile(forward_pat, (self.resol, 1))
 
-        # Green channel: varies top to bottom. Hence the transpose
+        # Green channel: varies top to bottom. Hence, the transpose
         rgb[:, :, 1] = np.tile(forward_pat, (self.resol, 1)).T
 
         # Blue channel: varies left to right (decreasing)
-        rgb[:, :, 2] = np.tile(backward_pat, (self.resol, 1))
+        rgb[:, :, 2] = np.tile(backward_pat,(self.resol, 1))
 
-        # rgb array copy is returned to the output array
+        # RGB array copy is returned to the output array
         self.output = rgb.copy()
         return self.output.copy()
 
