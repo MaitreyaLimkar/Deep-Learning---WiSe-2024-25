@@ -15,6 +15,7 @@ spectrum = pat.Spectrum(200)
 spectrum.draw()
 spectrum.show()
 
-generate = gen.ImageGenerator('./data/exercise_data/', './data/Labels.json', 8, [12, 12, 3], rotation=False, mirroring=False,
+generate = gen.ImageGenerator('./data/exercise_data/', './data/Labels.json',
+                              10, [32, 32, 3], rotation=False, mirroring=False,
                              shuffle=True)
 generate.show()
