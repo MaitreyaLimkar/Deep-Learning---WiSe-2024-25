@@ -1,7 +1,7 @@
 """"  Fully Connected (FC) layer """
 #  Inherits the base layer
 
-from Exercise_1.src_to_implement.Layers.Base import BaseLayer
+from Base import BaseLayer
 import numpy as np
 
 class FullyConnected(BaseLayer):
