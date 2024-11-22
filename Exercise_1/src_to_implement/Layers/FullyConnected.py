@@ -1,7 +1,7 @@
 """"  Fully Connected (FC) layer """
 #  Inherits the base layer
 
-from Base import BaseLayer
+from .Base import BaseLayer
 import numpy as np
 
 class FullyConnected(BaseLayer):
@@ -11,7 +11,7 @@ class FullyConnected(BaseLayer):
         super().__init__()
         self.grad_value = None
         self._optimizer = None
-        self.weights = np.random.uniform(0, 1, (input_size, output_size))
+        self.weights = np.random.rand(input_size + 1, output_size)
 
         self.trainable = True
         self.input_tensor= None
@@ -20,17 +20,14 @@ class FullyConnected(BaseLayer):
 
     def forward(self, input_tensor):
 
-        # input_tensor will be used in backward pass
-        self.input_tensor = input_tensor
-
         # Getting the dimensions
-        batch_size, input_size = np.shape(input_tensor)
+        batch_size, _ = np.shape(input_tensor)
 
         # Appending additional column
         self.input_tensor = np.column_stack((input_tensor, np.ones(batch_size)))
 
         # Dot product and output returned
-        return input_tensor @ self.weights
+        return self.input_tensor @ self.weights
 
     @property
     def optimizer(self):
@@ -53,7 +50,7 @@ class FullyConnected(BaseLayer):
             self.weights = self.optimizer.calculate_update(self.weights, self.gradient_weights)
 
         # We exclude the bias term and then return the contribution of the layer's weight
-        return error_tensor @ self.weights[:-1].T
+        return error_tensor @ self.weights[:-1,:].T
     
     @property
     def gradient_weights(self):
