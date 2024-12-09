@@ -1,0 +1,66 @@
+""""  Fully Connected (FC) layer """
+#  Inheriting the base layer
+
+from .Base import BaseLayer
+import numpy as np
+
+class FullyConnected(BaseLayer):
+    def __init__(self, input_size, output_size):
+
+        # Calling the super-constructor and initializing the inputs uniformly
+        super().__init__()
+        self.grad_value = None
+        self._optimizer = None
+        self.weights = np.random.rand(input_size + 1, output_size)
+
+        self.trainable = True
+        self.input_tensor= None
+        self.input_size = input_size
+        self.output_size = output_size
+
+    def forward(self, input_tensor):
+
+        # Getting the dimensions
+        batch_size, _ = np.shape(input_tensor)
+
+        # Appending additional column
+        self.input_tensor = np.column_stack((input_tensor, np.ones(batch_size)))
+
+        # Dot product and output returned
+        return self.input_tensor @ self.weights
+
+    @property
+    def optimizer(self):
+        """ This is the getter function for optimizer """
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, new_value):
+        """ This is the setter function for optimizer """
+        self._optimizer = new_value
+
+    def backward(self, error_tensor):
+        """ Returns a tensor that serves as the error tensor for the previous layer. """
+
+        # Here the gradient is calculated using the input_tensor and error_tensor
+        self.grad_value = self.input_tensor.T @ error_tensor
+
+        # Won't perform an update if the optimizer is not set
+        if self._optimizer is not None:
+            self.weights = self.optimizer.calculate_update(self.weights, self.gradient_weights)
+
+        # We exclude the bias term and then return the contribution of the layer's weight
+        return error_tensor @ self.weights[:-1,:].T
+    
+    @property
+    def gradient_weights(self):
+        """ Returns the gradient with respect to the weights. """
+        return self.grad_value
+
+    def initialize(self, weights_initializer, bias_initializer):
+
+        # Initialize the weights and bias of the fully connected layer
+        dim_in, dim_out = self.weights.shape
+        self.weights[:self.input_size, :] = weights_initializer.initialize(self.weights[:-1, :].shape, dim_in - 1,
+                                                                           dim_out)
+        self.weights[-1, :] = bias_initializer.initialize(self.weights[-1, :].shape, dim_in - 1, dim_out)
