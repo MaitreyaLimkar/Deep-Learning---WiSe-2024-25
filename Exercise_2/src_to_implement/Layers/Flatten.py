@@ -1,7 +1,8 @@
 """ Flatten Layer """
 # This layer reshapes the multidimensional input to a one dimensional feature vector
 
-from Exercise_2.src_to_implement.Layers.Base import BaseLayer
+#from Exercise_2.src_to_implement.Layers.Base import BaseLayer
+from .Base import BaseLayer
 
 class Flatten(BaseLayer):
     def __init__(self):
