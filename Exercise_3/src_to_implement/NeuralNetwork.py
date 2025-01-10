@@ -27,9 +27,18 @@ class NeuralNetwork:
         for layer in self.layers:
             input_tensor = layer.forward(input_tensor)
 
-        # We shall pass through the loss layer for Cross Entropy loss
-        output = self.loss_layer.forward(input_tensor, self.label_tensor)
-        return output
+        # Pass through the loss layer for the main data loss
+        data_loss = self.loss_layer.forward(input_tensor, self.label_tensor)
+
+        # Calculate regularization loss by summing norms from all trainable layers
+        regularization_loss = 0.0
+        for layer in self.layers:
+            if layer.trainable and layer.optimizer and layer.optimizer.regularizer:
+                regularization_loss += layer.optimizer.regularizer.norm(layer.weights)
+
+        # Total loss is the sum of data loss and regularization loss
+        total_loss = data_loss + regularization_loss
+        return total_loss
 
     def backward(self):
 

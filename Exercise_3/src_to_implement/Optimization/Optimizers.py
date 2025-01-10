@@ -15,13 +15,14 @@ class Sgd(Optimizer):
 
     def calculate_update(self, weight_tensor, gradient_tensor):
         # Apply regularizer if present
-        if self.regularizer:
-            gradient_tensor += self.regularizer.calculate(weight_tensor)
+        if self.regularizer is None:
+            regularization_value = 0
+        else:
+            regularization_value = self.learning_rate * self.regularizer.calculate_gradient(weight_tensor)
         weight_tensor -= self.learning_rate * gradient_tensor
-        return weight_tensor
+        return weight_tensor - regularization_value
 
-
-"""" SGD w/ Momentum and Adam Optimizer """
+""" SGD w/ Momentum and Adam Optimizer """
 import numpy as np
 
 #  Advanced optimization schemes are implemented to increase the speed of convergence.
@@ -33,12 +34,16 @@ class SgdWithMomentum(Optimizer):
         self.velocity = 0
 
     def calculate_update(self, weight_tensor, gradient_tensor):
+        if self.regularizer is None:
+            regularization_value = 0
+        else:
+            regularization_value = self.learning_rate * self.regularizer.calculate_gradient(weight_tensor)
 
-        if self.regularizer: # Apply regularizer if present
-            gradient_tensor += self.regularizer.calculate(weight_tensor)
+        # Update velocity with gradient and regularization term
         self.velocity = self.momentum_rate * self.velocity - self.learning_rate * gradient_tensor
-        weight_tensor += self.velocity # Update the weights
-        return weight_tensor
+
+        # Update weights using velocity
+        return weight_tensor + self.velocity - regularization_value
 
 class Adam(Optimizer):
     def __init__(self, learning_rate: float, mu, rho):
@@ -53,8 +58,11 @@ class Adam(Optimizer):
 
     def calculate_update(self, weight_tensor, gradient_tensor):
         # Apply regularizer if present
-        if self.regularizer:
-            gradient_tensor += self.regularizer.calculate(weight_tensor)
+        # Regularization term
+        if self.regularizer is None:
+            regularization_value = 0
+        else:
+            regularization_value = self.learning_rate * self.regularizer.calculate_gradient(weight_tensor)
 
         self.gk = gradient_tensor
         self.vk = self.mu * self.vk + (1 - self.mu) * self.gk
@@ -63,4 +71,4 @@ class Adam(Optimizer):
         rk_hat = self.rk / (1 - self.rho ** self.time_step)
         self.time_step += 1
 
-        return weight_tensor - self.learning_rate * (vk_hat / (np.sqrt(rk_hat) + np.finfo(float).eps))
+        return weight_tensor - self.learning_rate * (vk_hat / (np.sqrt(rk_hat) + np.finfo(float).eps)) - regularization_value
