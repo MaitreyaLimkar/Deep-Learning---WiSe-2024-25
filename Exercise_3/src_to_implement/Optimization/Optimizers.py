@@ -1,5 +1,7 @@
 """" Optimizers """
 
+import numpy as np
+
 class Optimizer:
     def __init__(self):
         self.regularizer = None
@@ -23,7 +25,6 @@ class Sgd(Optimizer):
         return weight_tensor - regularization_value
 
 """ SGD w/ Momentum and Adam Optimizer """
-import numpy as np
 
 #  Advanced optimization schemes are implemented to increase the speed of convergence.
 class SgdWithMomentum(Optimizer):
