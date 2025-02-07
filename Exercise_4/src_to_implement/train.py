@@ -25,13 +25,15 @@ val_dl = DataLoader(val_ds, batch_size=32, shuffle=False)
 resnet_model = model.ResNet()
 
 # Set up a suitable loss criterion for multi-label classification
-criterion = nn.BCEWithLogitsLoss()
+criterion = nn.BCELoss()
 
 # Set up the optimizer
-optimizer = optim.Adam(resnet_model.parameters(), lr=0.001)
+optimizer = optim.Adam(resnet_model.parameters(), lr=0.0001)
 
 # Create an object of type Trainer and set its early stopping criterion
-trainer = Trainer(resnet_model, crit=criterion, optim=optimizer, train_dl=train_dl, val_test_dl=val_dl, cuda=True, early_stopping_patience=5)
+trainer = Trainer(resnet_model, crit=criterion, optim=optimizer,
+                  train_dl=train_dl, val_test_dl=val_dl, cuda=True,
+                  early_stopping_patience=80)
 
 # Start training
 res = trainer.fit(epochs=50)

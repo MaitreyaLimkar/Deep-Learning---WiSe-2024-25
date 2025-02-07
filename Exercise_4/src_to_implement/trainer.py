@@ -1,6 +1,6 @@
 import torch as t
 from sklearn.metrics import f1_score
-#from tqdm.autonotebook import tqdm
+from tqdm.autonotebook import tqdm
 
 
 class Trainer:
@@ -27,10 +27,12 @@ class Trainer:
             self._crit = crit.cuda()
             
     def save_checkpoint(self, epoch):
-        t.save({'state_dict': self._model.state_dict()}, 'checkpoints/checkpoint_{:03d}.ckp'.format(epoch))
+        t.save({'state_dict': self._model.state_dict()},
+               f'checkpoints/checkpoint_{epoch:03d}.ckp')
     
     def restore_checkpoint(self, epoch_n):
-        ckp = t.load('checkpoints/checkpoint_{:03d}.ckp'.format(epoch_n), 'cuda' if self._cuda else None)
+        ckp = t.load(f'checkpoints/checkpoint_{epoch_n:03d}.ckp',
+                     map_location='cuda' if self._cuda else 'cpu')
         self._model.load_state_dict(ckp['state_dict'])
         
     def save_onnx(self, fn):
@@ -63,8 +65,6 @@ class Trainer:
         loss.backward()
         self._optim.step()
         return loss.item()
-        
-        
     
     def val_test_step(self, x, y):
         
@@ -87,7 +87,8 @@ class Trainer:
         for x, y in self._train_dl:
             if self._cuda:
                 x, y = x.cuda(), y.cuda()
-            total_loss += self.train_step(x, y)
+            loss = self.train_step(x, y)
+            total_loss += loss
         return total_loss / len(self._train_dl)
     
     def val_test(self):
@@ -100,18 +101,22 @@ class Trainer:
         # calculate the average loss and average metrics of your choice. You might want to calculate these metrics in designated functions
         # return the loss and print the calculated metrics
         self._model.eval()
-        total_loss = 0
+        total_loss = 0.0
         all_preds, all_labels = [], []
         with t.no_grad():
             for x, y in self._val_test_dl:
                 if self._cuda:
                     x, y = x.cuda(), y.cuda()
-                loss, preds = self.val_test_step(x, y)
+                loss, predict = self.val_test_step(x, y)
                 total_loss += loss
-                all_preds.append(preds.cpu())
+                all_preds.append(predict.cpu())
                 all_labels.append(y.cpu())
         avg_loss = total_loss / len(self._val_test_dl)
-        f1 = f1_score(t.cat(all_labels).numpy(), t.cat(all_preds).numpy().round(), average='macro')
+        predict_tensor = t.cat(all_preds, dim=0)
+        labels_tensor = t.cat(all_labels, dim=0)
+        predict_bin = (predict_tensor > 0.5).int()
+        labels_bin = labels_tensor.int()
+        f1 = f1_score(predict_bin, labels_bin, average='macro')
         print(f'Validation Loss: {avg_loss}, F1 Score: {f1}')
         return avg_loss, f1
         
@@ -119,31 +124,39 @@ class Trainer:
     def fit(self, epochs=-1):
         assert self._early_stopping_patience > 0 or epochs > 0
         # create a list for the train and validation losses, and create a counter for the epoch 
-        assert self._early_stopping_patience > 0 or epochs > 0
+
         train_losses, val_losses = [], []
         best_loss, patience = float('inf'), self._early_stopping_patience
         epoch = 0
-        
-        while epochs == -1 or epoch < epochs:
-      
-            # stop by epoch number
-            # train for a epoch and then calculate the loss and metrics on the validation set
-            # append the losses to the respective lists
-            # use the save_checkpoint function to save the model (can be restricted to epochs with improvement)
-            # check whether early stopping should be performed using the early stopping criterion and stop if so
-            # return the losses for both training and validation
-            train_loss = self.train_epoch()
-            val_loss = self.val_test()
-            train_losses.append(train_loss)
-            val_losses.append(val_loss)
-            if val_loss < best_loss:
-                best_loss = val_loss
-                self.save_checkpoint(epoch)
-                patience = self._early_stopping_patience
-            else:
-                patience -= 1
-            if patience == 0:
+        best_f1 = 0
+
+        while True:
+            # 1) Stop if we have reached the specified number of epochs
+            if epoch == epochs:
+                print("Reached maximum number of epochs.")
                 break
+
+            # 2) Training for one epoch
+            train_loss = self.train_epoch()
+            train_losses.append(train_loss)
+
+            # 3) Validation step
+            val_loss, val_f1 = self.val_test()
+            val_losses.append(val_loss)
+
+            if val_f1 > best_f1:
+                best_f1 = val_f1
+                patience = 0
+            # Save the best model so far (based on F1)
+                self.save_checkpoint(epoch)
+            else:
+                patience += 1
+
+            # 5) Early stopping criterion
+            if patience >= self._early_stopping_patience:
+                print(f"Early stopping triggered at epoch {epoch}.")
+                break
+
             epoch += 1
 
         return train_losses, val_losses
