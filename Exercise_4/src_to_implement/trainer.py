@@ -1,6 +1,6 @@
 import torch as t
 from sklearn.metrics import f1_score
-from tqdm.autonotebook import tqdm
+#from tqdm.autonotebook import tqdm
 
 
 class Trainer:
@@ -57,7 +57,12 @@ class Trainer:
         # -compute gradient by backward propagation
         # -update weights
         # -return the loss
-        #TODO
+        self._optim.zero_grad()
+        outputs = self._model(x)
+        loss = self._crit(outputs, y)
+        loss.backward()
+        self._optim.step()
+        return loss.item()
         
         
     
@@ -66,7 +71,10 @@ class Trainer:
         # predict
         # propagate through the network and calculate the loss and predictions
         # return the loss and the predictions
-        #TODO
+        with t.no_grad():
+            outputs = self._model(x)
+            loss = self._crit(outputs, y)
+        return loss.item(), outputs
         
     def train_epoch(self):
         # set training mode
@@ -74,7 +82,13 @@ class Trainer:
         # transfer the batch to "cuda()" -> the gpu if a gpu is given
         # perform a training step
         # calculate the average loss for the epoch and return it
-        #TODO
+        self._model.train()
+        total_loss = 0
+        for x, y in self._train_dl:
+            if self._cuda:
+                x, y = x.cuda(), y.cuda()
+            total_loss += self.train_step(x, y)
+        return total_loss / len(self._train_dl)
     
     def val_test(self):
         # set eval mode. Some layers have different behaviors during training and testing (for example: Dropout, BatchNorm, etc.). To handle those properly, you'd want to call model.eval()
@@ -85,15 +99,32 @@ class Trainer:
         # save the predictions and the labels for each batch
         # calculate the average loss and average metrics of your choice. You might want to calculate these metrics in designated functions
         # return the loss and print the calculated metrics
-        #TODO
+        self._model.eval()
+        total_loss = 0
+        all_preds, all_labels = [], []
+        with t.no_grad():
+            for x, y in self._val_test_dl:
+                if self._cuda:
+                    x, y = x.cuda(), y.cuda()
+                loss, preds = self.val_test_step(x, y)
+                total_loss += loss
+                all_preds.append(preds.cpu())
+                all_labels.append(y.cpu())
+        avg_loss = total_loss / len(self._val_test_dl)
+        f1 = f1_score(t.cat(all_labels).numpy(), t.cat(all_preds).numpy().round(), average='macro')
+        print(f'Validation Loss: {avg_loss}, F1 Score: {f1}')
+        return avg_loss, f1
         
     
     def fit(self, epochs=-1):
         assert self._early_stopping_patience > 0 or epochs > 0
         # create a list for the train and validation losses, and create a counter for the epoch 
-        #TODO
+        assert self._early_stopping_patience > 0 or epochs > 0
+        train_losses, val_losses = [], []
+        best_loss, patience = float('inf'), self._early_stopping_patience
+        epoch = 0
         
-        while True:
+        while epochs == -1 or epoch < epochs:
       
             # stop by epoch number
             # train for a epoch and then calculate the loss and metrics on the validation set
@@ -101,7 +132,21 @@ class Trainer:
             # use the save_checkpoint function to save the model (can be restricted to epochs with improvement)
             # check whether early stopping should be performed using the early stopping criterion and stop if so
             # return the losses for both training and validation
-        #TODO
+            train_loss = self.train_epoch()
+            val_loss = self.val_test()
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
+            if val_loss < best_loss:
+                best_loss = val_loss
+                self.save_checkpoint(epoch)
+                patience = self._early_stopping_patience
+            else:
+                patience -= 1
+            if patience == 0:
+                break
+            epoch += 1
+
+        return train_losses, val_losses
                     
         
         
