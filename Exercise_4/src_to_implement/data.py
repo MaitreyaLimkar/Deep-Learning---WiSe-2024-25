@@ -9,11 +9,12 @@ train_std = [0.16043035, 0.16043035, 0.16043035]
 
 class ChallengeDataset(Dataset):
     def __init__(self, data, mode):
+        # Initializing dataset with the data and mode parameters
         self.data = data
         self.mode = mode.lower()
 
-        # Define transformations for train and validation modes.
-        # Note: For training, we include a simple data augmentation (random horizontal flip).
+        # Setting up different transformations based on the mode
+        # Adding data augmentation for training mode by including random flips
         if self.mode == "train":
             self.transform = tv.transforms.Compose([
                 tv.transforms.ToPILImage(),
@@ -21,7 +22,7 @@ class ChallengeDataset(Dataset):
                 tv.transforms.ToTensor(),
                 tv.transforms.Normalize(mean=train_mean, std=train_std)
             ])
-        else:  # For validation or any other mode, we use a fixed transformation.
+        else:  # Using simpler transformations for validation and other modes
             self.transform = tv.transforms.Compose([
                 tv.transforms.ToPILImage(),
                 tv.transforms.ToTensor(),
@@ -29,26 +30,25 @@ class ChallengeDataset(Dataset):
             ])
 
     def __len__(self):
+        # Returning the total number of samples in the dataset
         return len(self.data)
 
     def __getitem__(self, idx):
-        # Get the row from the dataframe.
+        # Accessing the data row at the given index
         row = self.data.iloc[idx]
 
-        # Read the image using skimage.io.imread.
-        # Assumes that the dataframe has a column "filename" with the image path.
+        # Loading the image from the file path
         image = imread(row["filename"])
 
-        # Check if the image is grayscale. Many grayscale images have shape (H, W)
-        # or shape (H, W, 1). In these cases, convert to RGB.
+        # Checking if need to convert grayscale images to RGB
+        # Handling both (H, W) and (H, W, 1) formats
         if image.ndim == 2 or (image.ndim == 3 and image.shape[-1] == 1):
             image = gray2rgb(image)
 
-        # Apply the transformation pipeline.
+        # Applying transformation pipeline to the image
         image = self.transform(image)
 
-        # Extract the label.
-        # Assumes the dataframe has a column "label". Adjust as needed.
+        # Extracting the binary labels for cracks and inactive areas
         crack_label = row["crack"]
         inactive_label = row["inactive"]
         label = torch.tensor([crack_label, inactive_label], dtype=torch.float)

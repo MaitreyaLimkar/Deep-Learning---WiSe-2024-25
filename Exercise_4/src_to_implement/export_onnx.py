@@ -5,10 +5,9 @@ import torchvision as tv
 from model import ResNet
 
 epoch = int(sys.argv[1])
-# Model initiated
+
 model = ResNet()
 
-# Define the loss function
 crit = t.nn.BCELoss()
 trainer = Trainer(model, crit)
 trainer.restore_checkpoint(epoch)
